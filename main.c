@@ -111,7 +111,7 @@ int rolldie(int player)
 void actionNode(int player)
 {
 	void *boardPtr = smmdb_getData(LISTNO_NODE, cur_player[player].position );
-	//int type = smmObj_getNodeType(cur_player[player].position);
+
 	int type = smmObj_getNodeType( boardPtr );
     char *name = smmObj_getNodeName( boardPtr );
     void *gradePtr;
