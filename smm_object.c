@@ -28,7 +28,7 @@ char* smmObj_getTypeName(int type)
 
 //3. 관련 함수 변경 
 //object generation
-smmObject_t* smmObj_genObject(const char* name, smmObjType_e objType, int type, int credit, int energy, smmObjGrade_e grade)
+smmObject_t* smmObj_genObject(const char* name, smmObjType_e objType, int type, int credit, int energy, int charge, smmObjGrade_e grade)
 {    
     smmObject_t* ptr;
 
@@ -42,6 +42,7 @@ smmObject_t* smmObj_genObject(const char* name, smmObjType_e objType, int type, 
         ptr->type = type;
         ptr->credit = credit;
         ptr->energy = energy;
+        ptr->charge = charge;
         ptr->grade = grade;
     }
 
@@ -87,4 +88,11 @@ int smmObj_getNodeCredit(const smmObject_t* nodePtr)
 int smmObj_getNodeEnergy(const smmObject_t* nodePtr)
 {
     return nodePtr->energy;
+}
+
+// Function to get the charge value of a node from an object
+// nodePtr: smmObject_t 구조체를 가리키는 포인터  
+int smmObj_getNodeCharge(const smmObject_t* nodePtr)
+{
+    return nodePtr->charge;
 }

@@ -51,30 +51,20 @@ void printGrades(int player); //print all the grade history of the player
 
 // Function to print the opening message
 void opening(void){
-    printf("~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+\n");
+    printf("\n\n~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+\n");
     printf("             !!Sookmyung Marble!! Let's Graduate (total credit : 30)             \n");
-    printf("~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+\n");
+    printf("~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+\n\n\n");
 }
 
 
 // Function to print grades of a player
 void printGrades(int player){
     int i;
-    void *gradePtr;
+    void* gradePtr;
     for (i = 0; i < smmdb_len(LISTNO_OFFSET_GRADE + player); i++)
     {
         gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE + player, i);
         printf("%s : %i\n", smmObj_getNodeName(gradePtr), actionNode(gradePtr));
-    }
-}
-
-// Function to print player status
-void printPlayerStatus(void){
-    int i;
-    
-    for (i = 0; i < player_nr; i++)
-    {
-        printf("%s:credit %i, energy %i, position %i\n", cur_player[i].name, cur_player[i].accumCredit, cur_player[i].energy, cur_player[i].position);
     }
 }
 
@@ -98,11 +88,20 @@ void generatePlayers(int n, int initEnergy) {
         cur_player[i].flag_graduate = 0;
     }
 }
-  
+
+// Function to print player status
+void printPlayerStatus(int player){
+    void* currentNode = smmdb_getData(LISTNO_NODE, cur_player[player].position);
+
+    printf("%s at %i. %s, credit %i, energy %i\n", cur_player[player].name, cur_player[player].position, smmObj_getNodeName(currentNode), cur_player[player].accumCredit, cur_player[player].energy);
+	
+}
+
 // Function to simulate rolling a die
 int rolldie(int player) {
     char c;
-    printf(" Press any key to roll a die (press g to see grade): ");
+    int turn=0;
+    printf("This is %s's turn ::::Press any key to roll a die (press g to see grade): ",cur_player[turn].name);
     c = getchar();
     fflush(stdin);
     
@@ -155,8 +154,9 @@ int main(int argc, const char * argv[]) {
     int type;
     int credit;
     int energy;
+    int charge;
     int i;
-    int initEnergy;
+    int initEnergy=18;
     int turn=0;
 
     board_nr = 0;
@@ -164,8 +164,6 @@ int main(int argc, const char * argv[]) {
     festival_nr = 0;
     
     srand(time(NULL));
-    //0.opening
-    opening();
     
     //1. import parameters ---------------------------------------------------------------------------------
     //1-1. boardConfig 
@@ -180,30 +178,28 @@ int main(int argc, const char * argv[]) {
     while ( fscanf(fp, "%s %i %i %i", name, &type, &credit, &energy) == 4 ) //read a node parameter set
     {
         //store the parameter set
-        //(char* name, smmObjType_e objType, int type, int credit, int energy, smmObjGrade_e grade)
         
+        // Generate a board object and store the parameter set in the linked list
 		smmObject_t* boardObj = smmObj_genObject(name, smmObjType_board, type, credit, energy, 0);
         smmdb_addTail(LISTNO_NODE, boardObj);
+        
+        // If the node type is SMMNODE_TYPE_HOME, store the initial energy value
         if (type == SMMNODE_TYPE_HOME)
            initEnergy = energy;
         board_nr++;
     }
     fclose(fp);
-    printf("Total number of board nodes : %i\n", board_nr);
-
-
+    
+	// Display information about each board node
     for (i = 0;i<board_nr;i++)
     {
         void* boardObj = smmdb_getData(LISTNO_NODE, i);
 
         printf("node %i : %s, %i(%s), credit %i, energy %i\n", i, smmObj_getNodeName(boardObj), smmObj_getNodeType(boardObj), smmObj_getTypeName(smmObj_getNodeType(boardObj)), smmObj_getNodeCredit(boardObj), smmObj_getNodeEnergy(boardObj));
     }
+    printf("Total number of board nodes : %i\n", board_nr);
     //printf("(%s)", smmObj_getTypeName(SMMNODE_TYPE_LECTURE));
-    
-	//1-2 grade
-	smmObjGrade_rand();
 	
-    #if 0
     //2. food card config 
     if ((fp = fopen(FOODFILEPATH,"r")) == NULL)
     {
@@ -212,11 +208,24 @@ int main(int argc, const char * argv[]) {
     } 
     
     printf("\n\nReading food card component......\n");
-    while () //read a food parameter set
+    while (fscanf(fp, "%s %i ", name, &charge) == 2 ) //read a food parameter set
     {
         //store the parameter set
+        
+         // Generate a food card object and store the parameter set in the linked list
+        smmObject_t* boardObj = smmObj_genObject(name, 0, 0, 0, 0, charge, 0);
+        smmdb_addTail(LISTNO_FOODCARD, boardObj);
+        food_nr++;
     }
     fclose(fp);
+    
+    // Display information about each food card
+    for (i = 0;i<food_nr;i++)
+    {
+        void* boardObj = smmdb_getData(LISTNO_FOODCARD, i);
+
+        printf("%i. %s, charge: %i\n", i, smmObj_getNodeName(boardObj), smmObj_getNodeCharge(boardObj));
+    }
     printf("Total number of food cards : %i\n", food_nr);
     
     
@@ -228,15 +237,33 @@ int main(int argc, const char * argv[]) {
     }
     
     printf("\n\nReading festival card component......\n");
-    while () //read a festival card string
+    while (fscanf(fp, "%s", name) == 1 ) //read a festival card string
     {
         //store the parameter set
+
+		// Generate a festival card object and store the parameter set in the linked list        
+		smmObject_t* boardObj = smmObj_genObject(name, 0);
+        smmdb_addTail(LISTNO_FESTCARD, boardObj);
+        
+        festival_nr++;
     }
     fclose(fp);
+	
+	// Display information about each festival card
+    for (i = 0;i<festival_nr;i++)
+    {
+        void* boardObj = smmdb_getData(LISTNO_FESTCARD, i);
+
+        printf("%i. %s\n", i, smmObj_getNodeName(boardObj));
+    }
     printf("Total number of festival cards : %i\n", festival_nr);
-    #endif
 
-
+	//0.opening
+    opening();
+    
+    //1-2 grade
+	smmObjGrade_rand();
+	
     //2. Player configuration ---------------------------------------------------------------------------------
     
     do
@@ -259,7 +286,10 @@ int main(int argc, const char * argv[]) {
         
         
         //4-1. initial printing
-        printPlayerStatus();
+        printf("\n========================== PLAYER STATUS ==========================\n");
+        for (i = 0; i < player_nr; i++)
+    		printPlayerStatus(i);
+    	printf("========================== PLAYER STATUS ==========================\n\n");
         
         //4-2. die rolling (if not in experiment) 
 		die_result=rolldie(turn);       

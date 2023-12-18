@@ -61,6 +61,7 @@ typedef struct smmObject {
        int credit;
        int energy;
        smmObjGrade_e grade;
+       int charge;
 } smmObject_t;
 
 
