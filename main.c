@@ -4,6 +4,7 @@
 #include "smm_database.h"
 #include "smm_common.h"
 
+#define MAX_GRADE	9
 #define BOARDFILEPATH "marbleBoardConfig.txt"
 #define FOODFILEPATH "marbleFoodConfig.txt"
 #define FESTFILEPATH "marbleFestivalConfig.txt"
@@ -16,8 +17,6 @@ static int food_nr;
 static int festival_nr;
 
 static int player_nr;
-    
-//void generatePlayers(int n, int initEnergy); //generate a new player
   
 
 typedef struct player {
@@ -47,64 +46,71 @@ float calcAverageGrade(int player); //calculate average grade of the player
 smmGrade_e takeLecture(int player, char *lectureName, int credit); //take the lecture (insert a grade of the player)
 void* findGrade(int player, char *lectureName); //find the grade from the player's grade history
 void printGrades(int player); //print all the grade history of the player
+
 #endif
 
+// Function to print the opening message
+void opening(void){
+    printf("~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+\n");
+    printf("             !!Sookmyung Marble!! Let's Graduate (total credit : 30)             \n");
+    printf("~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+\n");
+}
 
+
+// Function to print grades of a player
 void printGrades(int player){
-	int i;
-	void *gradePtr;
-	for (i=0;i<smmdb_len(LISTNO_OFFSET_GRADE + player);i++)
-     {
-         gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE + player, i);
-         printf("%s : %i\n", smmObj_getNodeName(gradePtr), smmObj_getNodeGrade(gradePtr));
-     }
+    int i;
+    void *gradePtr;
+    for (i = 0; i < smmdb_len(LISTNO_OFFSET_GRADE + player); i++)
+    {
+        gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE + player, i);
+        printf("%s : %i\n", smmObj_getNodeName(gradePtr), actionNode(gradePtr));
+    }
 }
 
+// Function to print player status
 void printPlayerStatus(void){
-	int i;
-	
-	for(i=0;i<player_nr;i++)
-	{
-		printf("%s:credit %i, energy %i, position %i",cur_player[i].name,cur_player[i].accumCredit,cur_player[i].energy,cur_player[i].position );
-	}
+    int i;
+    
+    for (i = 0; i < player_nr; i++)
+    {
+        printf("%s:credit %i, energy %i, position %i\n", cur_player[i].name, cur_player[i].accumCredit, cur_player[i].energy, cur_player[i].position);
+    }
 }
 
-void generatePlayers(int n, int initEnergy) //generate a new player
-{
-     int i;
-     //n time loop
-     for (i=0;i<n;i++)
-     {
-         //input name
-         printf("Input player %i's name:", i); //안내 문구  
-         scanf("%s", cur_player[i].name);
-         fflush(stdin);
+// Function to generate new players
+void generatePlayers(int n, int initEnergy) {
+    int i;
+    // n time loop
+    for (i = 0; i < n; i++)
+    {
+        // Input name
+        printf("Input player %i's name:", i); // Prompt
+        scanf("%s", cur_player[i].name);
+        fflush(stdin);
   
-         //set position
-         //player_position[i] = 0;
-         cur_player[i].position=0;
+        // Set position
+        cur_player[i].position = 0;
          
-         //set energy
-         //player_energy[i] = initEnergy;
-         cur_player[i].energy=initEnergy;
-         cur_player[i].accumCredit=0;
-         cur_player[i].flag_graduate=0;
-     }
+        // Set energy
+        cur_player[i].energy = initEnergy;
+        cur_player[i].accumCredit = 0;
+        cur_player[i].flag_graduate = 0;
+    }
 }
   
-int rolldie(int player)
-{
+// Function to simulate rolling a die
+int rolldie(int player) {
     char c;
     printf(" Press any key to roll a die (press g to see grade): ");
     c = getchar();
     fflush(stdin);
     
-#if 1
+    // Print grades if 'g' is pressed
     if (c == 'g')
         printGrades(player);
-#endif
     
-    return (rand()%MAX_DIE + 1);
+    return (rand() % MAX_DIE + 1);
 }
 
 //action code when a player stays at a node
@@ -113,30 +119,33 @@ void actionNode(int player)
 	void *boardPtr = smmdb_getData(LISTNO_NODE, cur_player[player].position );
 
 	int type = smmObj_getNodeType( boardPtr );
-    char *name = smmObj_getNodeName( boardPtr );
-    void *gradePtr;
-    
+	const char* name = smmObj_getNodeName(boardPtr);
+
 	switch(type)
 	{
-		//case lecture:
-		case SMMNODE_TYPE_LECTURE:
-			if 
+    //case lecture:
+    case SMMNODE_TYPE_LECTURE:
+        
+        if(cur_player[player].energy >= smmObj_getNodeEnergy(boardPtr)){
             cur_player[player].accumCredit += smmObj_getNodeCredit(boardPtr);
             cur_player[player].energy -= smmObj_getNodeEnergy(boardPtr);
 
-            //grade generation
-            gradePtr = smmObj_genObject(name, smmObjType_grade, 0, smmObj_getNodeCredit( boardPtr ), 0, ??);
+            // grade generation
+            smmObject_t* gradePtr = (smmObject_t*)smmObj_genObject(name, smmObjType_grade, 0, smmObj_getNodeCredit(boardPtr), 0, smmObjGrade_rand());
             smmdb_addTail(LISTNO_OFFSET_GRADE + player, gradePtr);
-		default:
-			break;
-    }
-}
+        }
+        break;
+    default:
+        break;
+	}
+}		
 
-void goForward(int player, int step){
-	void *boardPtr
-	cur_player[player].position += step;
-	boardPtr = smmdb_getData(Listino_NODE, cur_player[player].position);
-	printf("Player %s go to node %i(name:%s)\n", cur_player[player].name,cur_player[player].position,smmObj_getNodeName(boardPtr);
+// Function to make a player go forward
+void goForward(int player, int step) {
+    void* boardPtr;
+    cur_player[player].position += step;
+    boardPtr = smmdb_getData(LISTNO_NODE, cur_player[player].position);
+    printf("Player %s go to node %i (name:%s)\n", cur_player[player].name, cur_player[player].position, smmObj_getNodeName(boardPtr));
 }
 
 int main(int argc, const char * argv[]) {
@@ -155,7 +164,8 @@ int main(int argc, const char * argv[]) {
     festival_nr = 0;
     
     srand(time(NULL));
-    
+    //0.opening
+    opening();
     
     //1. import parameters ---------------------------------------------------------------------------------
     //1-1. boardConfig 
@@ -171,7 +181,8 @@ int main(int argc, const char * argv[]) {
     {
         //store the parameter set
         //(char* name, smmObjType_e objType, int type, int credit, int energy, smmObjGrade_e grade)
-        void *boardObj = smmObj_genObject(name, smmObjType_board, type, credit, energy, 0);
+        
+		smmObject_t* boardObj = smmObj_genObject(name, smmObjType_board, type, credit, energy, 0);
         smmdb_addTail(LISTNO_NODE, boardObj);
         if (type == SMMNODE_TYPE_HOME)
            initEnergy = energy;
@@ -183,19 +194,22 @@ int main(int argc, const char * argv[]) {
 
     for (i = 0;i<board_nr;i++)
     {
-        void *boardObj = smmdb_getData(LISTNO_NODE, i);
+        void* boardObj = smmdb_getData(LISTNO_NODE, i);
 
         printf("node %i : %s, %i(%s), credit %i, energy %i\n", i, smmObj_getNodeName(boardObj), smmObj_getNodeType(boardObj), smmObj_getTypeName(smmObj_getNodeType(boardObj)), smmObj_getNodeCredit(boardObj), smmObj_getNodeEnergy(boardObj));
     }
     //printf("(%s)", smmObj_getTypeName(SMMNODE_TYPE_LECTURE));
-
+    
+	//1-2 grade
+	smmObjGrade_rand();
+	
     #if 0
     //2. food card config 
     if ((fp = fopen(FOODFILEPATH,"r")) == NULL)
     {
         printf("[ERROR] failed to open %s. This file should be in the same directory of SMMarble.exe.\n", FOODFILEPATH);
         return -1;
-    }
+    } 
     
     printf("\n\nReading food card component......\n");
     while () //read a food parameter set
@@ -204,7 +218,6 @@ int main(int argc, const char * argv[]) {
     }
     fclose(fp);
     printf("Total number of food cards : %i\n", food_nr);
-    
     
     
     //3. festival card config 
@@ -229,7 +242,7 @@ int main(int argc, const char * argv[]) {
     do
     {
         //input player number to player_nr
-        printf("input player no.:");
+        printf("Input player no. (1 ~ 10):");
         scanf("%d", &player_nr);
         fflush(stdin);
     }
