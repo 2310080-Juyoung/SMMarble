@@ -7,14 +7,15 @@
 #define MAX_NODE        100
 // Array to store names corresponding to node types
 static char smmNodeName[SMMNODE_TYPE_MAX][MAX_CHARNAME] = {
-       "강의",
-       "식당",
-       "실험실",
-       "집",
-       "실험실로이동",
-       "음식찬스",
-       "축제시간"
+       "LECTURE",
+       "RESTAURANT",
+       "LABORATORY",
+       "HOME",
+       "GOTOLAB",
+       "FOODCHANCE",
+       "FESTIVAL"
 };
+
 
 // Function to get the name of a node type
 char* smmObj_getTypeName(int type)

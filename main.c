@@ -51,9 +51,9 @@ void printGrades(int player); //print all the grade history of the player
 
 // Function to print the opening message
 void opening(void){
-    printf("\n\n~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+\n");
+    printf("\n\n~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+\n\n");
     printf("             !!Sookmyung Marble!! Let's Graduate (total credit : 30)             \n");
-    printf("~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+\n\n\n");
+    printf("\n~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+~~+\n\n\n");
 }
 
 
@@ -100,8 +100,7 @@ void printPlayerStatus(int player){
 // Function to simulate rolling a die
 int rolldie(int player) {
     char c;
-    int turn=0;
-    printf("This is %s's turn ::::Press any key to roll a die (press g to see grade): ",cur_player[turn].name);
+    printf("This is %s's turn :::: Press any key to roll a die (press g to see grade): ",cur_player[player].name);
     c = getchar();
     fflush(stdin);
     
@@ -137,14 +136,47 @@ void actionNode(int player)
     default:
         break;
 	}
+	
 }		
 
 // Function to make a player go forward
 void goForward(int player, int step) {
-    void* boardPtr;
-    cur_player[player].position += step;
-    boardPtr = smmdb_getData(LISTNO_NODE, cur_player[player].position);
+    void* boardPtr; // Pointer to the current game board node
+    cur_player[player].position += step;// Move the player forward by the specified number of steps
+    boardPtr = smmdb_getData(LISTNO_NODE, cur_player[player].position); // Get data for the current game board node
     printf("Player %s go to node %i (name:%s)\n", cur_player[player].name, cur_player[player].position, smmObj_getNodeName(boardPtr));
+    
+    // Check if the current node is a restaurant and allow the player to eat
+    restaurantEat(player);
+    
+    foodChanceEat(player);
+}
+
+// Function to make a player eating at a restaurant on the game board
+
+void restaurantEat(int player){
+	void* boardPtr;
+    boardPtr = smmdb_getData(LISTNO_NODE, cur_player[player].position);
+	int sumEnergy=cur_player[player].energy+smmObj_getNodeEnergy(boardPtr);
+    
+    // Check if the current node is a restaurant and print relevant information
+	if(smmObj_getNodeType(boardPtr)== SMMNODE_TYPE_RESTAURANT){
+    	printf("	Let's eat in %s and charge %i energies (remained energy : %i)",smmObj_getNodeName(boardPtr),smmObj_getNodeEnergy(boardPtr),sumEnergy);
+	}
+}
+
+void foodChanceEat(int player){
+	char c;
+	void* boardPtr;
+    boardPtr = smmdb_getData(LISTNO_NODE, cur_player[player].position);
+    int sumEnergy=cur_player[player].energy+smmObj_getNodeCharge(boardPtr);
+    
+    if(smmObj_getNodeType(boardPtr)== SMMNODE_TYPE_FOODCHANCE){
+    	printf("	-> %s gets a food chance! press any key to pick a food card: ", cur_player[player].name);
+    		c = getchar();
+			fflush(stdin);
+    	printf("	-> %s picks %s and charges %i (remained energy : %i)", cur_player[player].name, smmObj_getNodeName(boardPtr), smmObj_getNodeCharge(boardPtr), sumEnergy);
+	}
 }
 
 int main(int argc, const char * argv[]) {
@@ -158,7 +190,8 @@ int main(int argc, const char * argv[]) {
     int i;
     int initEnergy=18;
     int turn=0;
-
+	int player;
+	
     board_nr = 0;
     food_nr = 0;
     festival_nr = 0;
