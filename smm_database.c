@@ -4,15 +4,6 @@
 #define LIST_END            -1
 #define MAX_LIST            LISTNO_OFFSET_GRADE+MAX_PLAYER
 
-//node definition for linked list
-typedef struct node{
-    int index;      //index of the node
-    void* obj;      //object data
-    void* next;         //pointer to the next
-    void* prev;         //pointer to the next
-} node_t;
-
-
 static node_t* list_database[MAX_LIST];
 static node_t* listPtr[MAX_LIST];
 static int list_cnt[MAX_LIST];

@@ -8,9 +8,10 @@
 #define SMMNODE_TYPE_GOTOLAB            4
 #define SMMNODE_TYPE_FOODCHANCE         5
 #define SMMNODE_TYPE_FESTIVAL           6
+#define SMMNODE_TYPE_EXPERIMENT			7
 
 #define MAX_CHARNAME                200
-#define SMMNODE_TYPE_MAX                7
+#define SMMNODE_TYPE_MAX                8
 
 typedef enum smmObjType {
     smmObjType_board = 0,
@@ -18,31 +19,9 @@ typedef enum smmObjType {
     smmObjType_grade
 } smmObjType_e;
 
-/* node type :
-    lecture,
-    restaurant,
-    laboratory,
-    home,
-    experiment,
-    foodChance,
-    festival
-*/
-
-
-/* grade :
-    A+,
-    A0,
-    A-,
-    B+,
-    B0,
-    B-,
-    C+,
-    C0,
-    C-
-*/
 
 typedef enum smmObjGrade {
-    smmObjGrade_Ap = 0,
+    smmObjGrade_Ap,
     smmObjGrade_A0,
     smmObjGrade_Am,
     smmObjGrade_Bp,
@@ -52,6 +31,34 @@ typedef enum smmObjGrade {
     smmObjGrade_C0,
     smmObjGrade_Cm
 } smmObjGrade_e;
+
+double getNumericValue(smmObjGrade_e grade) {
+    switch (grade) {
+        case smmObjGrade_Ap:
+            return 4.30;
+        case smmObjGrade_A0:
+            return 4.00;
+        case smmObjGrade_Am:
+            return 3.70;
+        case smmObjGrade_Bp:
+            return 3.40;
+        case smmObjGrade_B0:
+            return 3.10;
+        case smmObjGrade_Bm:
+            return 2.80;
+        case smmObjGrade_Cp:
+            return 2.50;
+        case smmObjGrade_C0:
+            return 2.20;
+        case smmObjGrade_Cm:
+            return 1.70;
+    }
+}
+
+//double getNumericValue(smmObjGrade_e grade) {
+    // 정확한 부동소수점 값을 반환
+  //  return (double)grade;
+//}
 
 //1. 구조체 형식 정의
 typedef struct smmObject {

@@ -11,4 +11,13 @@ int smmdb_deleteData(int list_nr, int index);       //delete data
 int smmdb_len(int list_nr);                   //get database length
 void* smmdb_getData(int list_nr, int index);       //get index'th data
 
+//node definition for linked list
+typedef struct node{
+    int index;      //index of the node
+    void* obj;      //object data
+    void* next;         //pointer to the next
+    void* prev;         //pointer to the prev
+    int node_type;
+} node_t;
+
 #endif /* smm_database_h */

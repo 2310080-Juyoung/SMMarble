@@ -3,7 +3,7 @@
 #include <string.h>
 
 
-#define MAX_NODETYPE    7
+#define MAX_NODETYPE    8
 #define MAX_NODE        100
 // Array to store names corresponding to node types
 static char smmNodeName[SMMNODE_TYPE_MAX][MAX_CHARNAME] = {
