@@ -58,16 +58,31 @@ void opening(void){
 
 
 // Function to print grades of a player
-void printGrades(int player){
+void printGrades(int player) {
     int i;
-    void* gradePtr;
-    for (i = 0; i < smmdb_len(LISTNO_OFFSET_GRADE + player); i++)
-    {
-        gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE + player, i);
-        printf("--> Printing player %s's grade (average 3.350000)", smmObj_getNodeName(gradePtr), actionNode(gradePtr));
+    double sum = 0.00;
+    for (i = 0; i < smmdb_len(LISTNO_OFFSET_GRADE + player); i++) {
+        void* gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE + player, i);
+        sum += getNumericValue(smmObj_getGrade(gradePtr));
+        printf("--> Printing player %s's grade", cur_player[player].name);
     }
-}
+	float average = sum / smmdb_len(LISTNO_OFFSET_GRADE + player);
+	printf("(average %s)\n",average);
     
+}
+
+float calcAverageGrade(int player) {
+    int i;
+    float sum = 0.00;
+
+    for (i = 0; i < smmdb_len(LISTNO_OFFSET_GRADE + player); i++) {
+        void* gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE + player, i);
+        sum += getNumericValue(*(smmObjGrade_e*)gradePtr);
+    }
+
+    return sum / smmdb_len(LISTNO_OFFSET_GRADE + player);
+}
+
 // Function to generate new players
 void generatePlayers(int n, int initEnergy) {
     int i;
@@ -115,34 +130,19 @@ int *getNodeTypePtr(node_t *boardPtr) {
     return &(boardPtr->node_type);
 }
 
-double Average(int player) {
-    int i;
-    double sum = 0.00;
-	smmObjGrade_e grade = smmObjGrade_rand();
-	double numericValue = getNumericValue(grade);
-    // Iterate over the grades of the player and calculate the sum
-    for (i = 0; i < smmdb_len(LISTNO_OFFSET_GRADE); i++) {
-        void* gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE, i);
-        sum += getNumericValue(grade); // Assuming getNumericValue is a function that extracts numeric value from the grade
-    }
-
-    // Calculate and return the average grade
-    return sum / smmdb_len(LISTNO_OFFSET_GRADE);
-}
-
 //action code when a player stays at a node
 void actionNode(int player)
 {
 	void* boardPtr = smmdb_getData(LISTNO_NODE, cur_player[player].position );
 	char c;
 	int type = smmObj_getNodeType( boardPtr );
-	const char* name = smmObj_getNodeName(boardPtr);
+	char name = smmObj_getNodeName(boardPtr);
 	int sumEnergy=cur_player[player].energy+smmObj_getNodeEnergy(boardPtr);
-	int *nodeTypePtr = smmObj_getNodeType(boardPtr);
-	char input[50];
-	smmObjGrade_e grade = smmObjGrade_rand();
+	char nodeTypePtr = smmObj_getNodeType(boardPtr);
+	smmGrade_t myGrade;
+	myGrade.grade = smmObjGrade_rand();
 	//double numericValue = getNumericValue(grade);
-	int average = Average(grade);
+	//float average = calcAverageGrade(player);
 		
 	switch(type){
   		//case lecture:
@@ -150,30 +150,37 @@ void actionNode(int player)
     		if(smmObj_getNodeType(boardPtr) == SMMNODE_TYPE_LECTURE){
     			while(1){
 					printf("	-> Lecture %s (credit:%i, energy:%i) starts! are you going to join? or drop? :",smmObj_getNodeName(boardPtr),smmObj_getNodeCredit(boardPtr),smmObj_getNodeEnergy(boardPtr));
-	    			scanf("%s", input);
+	    			char input[100];
+					scanf("%s", input);
 	    			
-	    			if (strcmp(input, "join") == 0){
+	    			if (strcmp(input,"join") == 0){
 						if(cur_player[player].energy >= smmObj_getNodeEnergy(boardPtr)){
 		    	    		cur_player[player].accumCredit += smmObj_getNodeCredit(boardPtr);
-		    	        	cur_player[player].energy -= smmObj_getNodeEnergy(boardPtr);
-			
+		    	        	int subEnergy = cur_player[player].energy - smmObj_getNodeEnergy(boardPtr);
 			            	// grade generation
-			            	void* gradePtr = smmObj_genObject(name, 0, 0, smmObj_getNodeCredit(boardPtr), smmObj_getNodeEnergy(boardPtr), 0,grade);
-			            	smmdb_addTail(LISTNO_OFFSET_GRADE + player, gradePtr);
-			            	
-			            	printf("-> %s successfully takes the lecture %s with grade %s (average : %.2f), remained energy : %i)",cur_player[player].name,smmObj_getNodeName(gradePtr),grade,average,sumEnergy);
-			        	}
+			            	//	void* gradePtr = smmObj_genObject(name, 0, 0, smmObj_getNodeCredit(boardPtr), smmObj_getNodeEnergy(boardPtr), 0, myGrade.grade);
+			            	//	smmdb_addTail(LISTNO_OFFSET_GRADE + player, gradePtr);
+			            	float average = calcAverageGrade(player);
+			            	printf("	-> %s successfully takes the lecture %s with grade %s (average : %.2f), remained energy : %d)",cur_player[player].name,smmObj_getNodeName(boardPtr), getGradeString(myGrade.grade), average, subEnergy);
+			        		cur_player[player].energy=subEnergy;
+			        		fflush(stdin);
+
+						} 
+						else {
+                   			printf("   -> %s is too hungry to take the lecture %s (remained:%i, required:%i)\n",cur_player[player].name,smmObj_getNodeName(boardPtr),cur_player[player].energy,smmObj_getNodeEnergy(boardPtr));
+               				fflush(stdin);
+						   }
 						break;
 	    			} 
 					else if (strcmp(input, "drop") == 0){
-						printf("·ê\n");
+						printf("   -> Player %s drops the lecture %s!\n",cur_player[player].name, smmObj_getNodeName(boardPtr));
+						fflush(stdin);
 						break;
 					}
 					else{
 						printf("	-> invalid input! input ""drop"" or ""join""!");
-					}
-	    
-		    	    
+					}  
+
 				}
 			}
 	        break;
@@ -217,11 +224,11 @@ void actionNode(int player)
 				printf("	OMG! This is experiment time!! Player %s goes to the lab.\n",cur_player[player].name);
 				
 				cur_player[player].position = 8;
-				*nodeTypePtr = SMMNODE_TYPE_EXPERIMENT;
+				nodeTypePtr = SMMNODE_TYPE_EXPERIMENT;
 			}
 			break;
 		case SMMNODE_TYPE_EXPERIMENT:
-			if (*nodeTypePtr == SMMNODE_TYPE_EXPERIMENT){
+			if (nodeTypePtr == SMMNODE_TYPE_EXPERIMENT){
 				int die_result=rolldie(player);
 				int randDie=rand()%MAX_DIE+1;
 				
@@ -229,16 +236,16 @@ void actionNode(int player)
 			
 				if(die_result>=randDie){
               		printf("	-> Experiment result : %i, success! %s can exit this lab!\n", die_result, cur_player[player].name);
-              		*nodeTypePtr = SMMNODE_TYPE_LABORATORY;
+              		nodeTypePtr == SMMNODE_TYPE_LABORATORY;
              	}	
 				else{
              		printf("  	-> Experiment result : %i, fail T_T. %s needs more experiment......\n", die_result, cur_player[player].name);
-             		*nodeTypePtr = SMMNODE_TYPE_GOTOLAB;
+             		nodeTypePtr == SMMNODE_TYPE_EXPERIMENT;
            		}
       		}
       		break;
 		case SMMNODE_TYPE_LABORATORY:
-			if (*nodeTypePtr == SMMNODE_TYPE_LABORATORY){
+			if (nodeTypePtr == SMMNODE_TYPE_LABORATORY){
 	           		printf("  	 -> This is not experiment time. You can go through this lab.\n");
 	       	}
       		break;

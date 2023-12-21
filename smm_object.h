@@ -12,14 +12,6 @@
 
 #define MAX_CHARNAME                200
 #define SMMNODE_TYPE_MAX                8
-
-typedef enum smmObjType {
-    smmObjType_board = 0,
-    smmObjType_card,
-    smmObjType_grade
-} smmObjType_e;
-
-
 typedef enum smmObjGrade {
     smmObjGrade_Ap,
     smmObjGrade_A0,
@@ -32,30 +24,17 @@ typedef enum smmObjGrade {
     smmObjGrade_Cm
 } smmObjGrade_e;
 
-double getNumericValue(smmObjGrade_e grade) {
-    switch (grade) {
-        case smmObjGrade_Ap:
-            return 4.30;
-        case smmObjGrade_A0:
-            return 4.00;
-        case smmObjGrade_Am:
-            return 3.70;
-        case smmObjGrade_Bp:
-            return 3.40;
-        case smmObjGrade_B0:
-            return 3.10;
-        case smmObjGrade_Bm:
-            return 2.80;
-        case smmObjGrade_Cp:
-            return 2.50;
-        case smmObjGrade_C0:
-            return 2.20;
-        case smmObjGrade_Cm:
-            return 1.70;
-    }
-}
+typedef enum smmObjType {
+    smmObjType_board = 0,
+    smmObjType_card,
+    smmObjType_grade
+} smmObjType_e;
 
-//double getNumericValue(smmObjGrade_e grade) {
+typedef struct smmGrade {
+    smmObjGrade_e grade;
+} smmGrade_t;
+
+double getNumericValue(smmObjGrade_e grade);
     // 정확한 부동소수점 값을 반환
   //  return (double)grade;
 //}
